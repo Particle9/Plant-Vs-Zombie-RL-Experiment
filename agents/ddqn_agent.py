@@ -150,7 +150,7 @@ class DDQNAgent:
         self.s_0 = s_1.copy()
         if done:
             if mode != "explore": # We document the end of the play
-                self.training_iterations.append(min(config.MAX_FRAMES, self.env._scene._chrono))
+                self.training_iterations.append(min(config.MAX_SECONDS, self.env.unwrapped._scene._chrono))
             self.s_0 = self._transform_observation(self.env.reset())
         return done
     
@@ -235,7 +235,7 @@ class DDQNAgent:
         rewards_t = torch.FloatTensor(rewards).to(device=self.network.device).reshape(-1,1)
         actions_t = torch.LongTensor(np.array(actions)).reshape(-1,1).to(
             device=self.network.device)
-        dones_t = torch.ByteTensor(dones).to(device=self.network.device)
+        dones_t = torch.BoolTensor(dones).to(device=self.network.device)
 
         qvals = torch.gather(self.network.get_qvals(states), 1, actions_t) # The selected action already respects the mask
         
@@ -339,7 +339,7 @@ class experienceReplayBuffer:
 class PlayerQ():
     def __init__(self, env = None, render=True):
         if env==None:
-            self.env = gym.make('gym_pvz:pvz-env-v2')
+            self.env = gym.make('gym_pvz:pvz-env-v2', disable_env_checker=True)
         else:
             self.env = env
         self.render = render
@@ -402,4 +402,4 @@ class PlayerQ():
         return summary
 
     def get_render_info(self):
-        return self.env._scene._render_info
+        return self.env.unwrapped._scene._render_info

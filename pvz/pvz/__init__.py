@@ -4,6 +4,11 @@ from .entities.plants.sunflower import Sunflower
 from .entities.plants.peashooter import Peashooter
 from .entities.plants.wallnut import Wallnut
 from .entities.plants.potatomine import Potatomine
+from .entities.plants.chomper import Chomper
+from .entities.plants.repeater import Repeater
+from .entities.plants.jalapeno import Jalapeno
 from .entities.zombies.basic_zombie_spawner import BasicZombieSpawner
 from .entities.zombies.wave_zombie_spawner import WaveZombieSpawner
+from .entities.zombies.zombie_newspaper import Zombie_newspaper
+from .entities.zombies.zombie_pole_vault import Zombie_pole_vault
 from . import config

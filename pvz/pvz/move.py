@@ -26,5 +26,5 @@ class Move:
     def apply_move(self, scene):
         scene.plants.append(scene.plant_deck[self.plant_name](self.lane, self.pos))
         scene.grid.add_obj(self.lane, self.pos)
-        scene.plant_cooldowns[self.plant_name] = scene.plant_deck[self.plant_name].COOLDOWN * config.FPS - 1 # Reset cooldown
+        scene.plant_cooldowns[self.plant_name] = max(0.0, scene.plant_deck[self.plant_name].COOLDOWN - config.SIMULATION_DT) # Reset cooldown
         scene.sun -= scene.plant_deck[self.plant_name].COST

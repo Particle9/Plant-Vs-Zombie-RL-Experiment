@@ -1,17 +1,17 @@
 import gym
 from gym.spaces import MultiDiscrete, MultiBinary, Tuple, Discrete
-from pvz import Scene, WaveZombieSpawner, Move, config, Sunflower, Peashooter, Wallnut, Potatomine
+from pvz import Scene, WaveZombieSpawner, Move, config, Sunflower, Peashooter, Wallnut, Potatomine, Chomper, Repeater, Jalapeno
 import numpy as np
 
 MAX_ZOMBIE_HP = 10000
 MAX_SUN = 10000
-MAX_COOLDOWN = 20 # Potatomine/Wallnut
+MAX_COOLDOWN = 50 # Potatomine/Wallnut
 
 class PVZEnv_V2(gym.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self):
-        self.plant_deck = {"sunflower": Sunflower, "peashooter": Peashooter, "wall-nut": Wallnut, "potatomine": Potatomine}
+        self.plant_deck = {"sunflower": Sunflower, "peashooter": Peashooter, "wall-nut": Wallnut, "potatomine": Potatomine, "chomper": Chomper, "repeater": Repeater, "jalapeno": Jalapeno}
         
         self.action_space = Discrete(len(self.plant_deck) * config.N_LANES * config.LANE_LENGTH + 1)
         # self.action_space = MultiDiscrete([len(self.plant_deck), config.N_LANES, config.LANE_LENGTH]) # plant, lane, pos
@@ -61,13 +61,13 @@ class PVZEnv_V2(gym.Env):
         self._take_action(action)
         self._scene.step() #Minimum one step
         reward = self._scene.score
-        episode_over = self._scene._chrono > config.MAX_FRAMES
+        episode_over = self._scene._chrono > config.MAX_SECONDS
         while((not self._scene.move_available()) and (not episode_over)):
             self._scene.step()
-            episode_over = self._scene._chrono > config.MAX_FRAMES
+            episode_over = self._scene._chrono > config.MAX_SECONDS
             reward += self._scene.score
         ob = self._get_obs()
-        episode_over = (episode_over) or (self._scene.lives <= 0)
+        episode_over = (episode_over) or (self._scene.lives <= 0) or (hasattr(self._scene._zombie_spawner, '_finished') and self._scene._zombie_spawner._finished and len(self._scene.zombies) == 0)
         self._reward = reward
         return ob, reward, episode_over, {}
     

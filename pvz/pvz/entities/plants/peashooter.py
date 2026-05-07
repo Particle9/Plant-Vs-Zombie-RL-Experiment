@@ -25,7 +25,7 @@ class Peashooter(Plant):
 
     def __init__(self, lane, pos):
         super().__init__(lane, pos)
-        self.attack_cooldown = self.ATTACK_COOLDOWN * config.FPS - 1
+        self.attack_cooldown = max(0.0, self.ATTACK_COOLDOWN - config.SIMULATION_DT)
         self.projectiles = []
 
     
@@ -33,9 +33,9 @@ class Peashooter(Plant):
         if self.attack_cooldown <= 0:
             if scene.grid.is_attacked(self.lane):
                 scene.projectiles.append(Pea(self.PROJECTILE_SPEED, self.ATTACK, self.lane, self.pos))
-                self.attack_cooldown = self.ATTACK_COOLDOWN * config.FPS - 1
+                self.attack_cooldown = max(0.0, self.ATTACK_COOLDOWN - config.SIMULATION_DT)
         else:
-            self.attack_cooldown -= 1
+            self.attack_cooldown -= config.SIMULATION_DT
 
     """def update_projectiles(self, scene):
         kept_projectiles = []

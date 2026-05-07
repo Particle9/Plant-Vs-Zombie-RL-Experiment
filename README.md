@@ -40,6 +40,8 @@ To train a DDQN agent
 python train_ddqn_agent.py
 ```
 
+This script now transfer-learns from the current DDQN checkpoint in `agents/agent_zoo/dfq5_epsexp` and fine-tunes a new model on the full plant deck, including Chomper, Repeater, and Jalapeno.
+
 To train other agents, use the dedicated train scripts. You will be asked to save the agent under a certain name/path we will refer as NAME in the following commands.
 Once the agent is trained, for DDQN agent, you can plot the learning curves with
 
@@ -62,7 +64,7 @@ With the following, you can visualize a game of an agent.
 ```
 python game_render.py
 ```
-By default, this will show the behavior of the DDQN agent. You can modify agent_type in game_render.py to use some other saved agents or even your own agent (doing the exact same modifications as above)
+By default, this will show the behavior of the DDQN agent. Point `DDQN_RENDER_MODEL` in `game_render.py` at the new transfer-trained checkpoint to render the full plant deck.
 
 To visualize a game with higher FPS (more fluid motions), change the FPS variable in pvz/pvz/config.py. This may have a slight impact on the behavior of some agents.
 

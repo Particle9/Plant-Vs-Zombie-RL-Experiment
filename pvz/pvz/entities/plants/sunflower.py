@@ -24,11 +24,11 @@ class Sunflower(Plant):
 
     def __init__(self, lane, pos):
         super().__init__(lane, pos)
-        self.production_cooldown = self.INITIAL_COOLDOWN * config.FPS - 1
+        self.production_cooldown = max(0.0, self.INITIAL_COOLDOWN - config.SIMULATION_DT)
     
     def step(self, scene):
         if self.production_cooldown <= 0:
             scene.sun += self.PRODUCTION
-            self.production_cooldown = self.PRODUCTION_COOLDOWN * config.FPS - 1
+            self.production_cooldown = max(0.0, self.PRODUCTION_COOLDOWN - config.SIMULATION_DT)
         else:
-            self.production_cooldown -= 1
+            self.production_cooldown -= config.SIMULATION_DT

@@ -3,9 +3,20 @@ from agents import KeyboardAgent
 from agents import PlayerQ, QNetwork, QNetwork_DQN
 from agents import ACAgent3, TrainerAC3
 from pvz import config
+import os
 import gym
 import torch
 import pygame
+
+PLANT_RENDER_ORDER = [
+    "sunflower",
+    "peashooter",
+    "wall-nut",
+    "potatomine",
+    "chomper",
+    "repeater",
+    "jalapeno",
+]
 
 class PVZ():
     def __init__(self,render=True, max_frames = 1000):
@@ -51,12 +62,21 @@ def render(render_info):
     zombie_sprite = {"zombie": pygame.image.load("assets/zombie_scaled.png").convert_alpha(),
      "zombie_cone": pygame.image.load("assets/zombie_cone_scaled.png").convert_alpha(),
      "zombie_bucket": pygame.image.load("assets/zombie_bucket_scaled.png").convert_alpha(),
-     "zombie_flag" :pygame.image.load("assets/zombie_flag_scaled.png").convert_alpha(),  }
+        "zombie_flag" :pygame.image.load("assets/zombie_flag_scaled.png").convert_alpha(),
+        "zombie_newspaper" :pygame.image.load("assets/zombie_newspaper_scaled.png").convert_alpha(),
+        "zombie_pole_vault" :pygame.image.load("assets/zombie_pole_vault_scaled.png").convert_alpha(),
+        "zombie_all_star" :pygame.image.load("assets/zombie_allstar_scaled.png").convert_alpha(),  }
     plant_sprite = {"peashooter": pygame.image.load("assets/peashooter_scaled.png").convert_alpha(),
                     "sunflower": pygame.image.load("assets/sunflower_scaled.png").convert_alpha(),
                     "wallnut": pygame.image.load("assets/wallnut_scaled.png").convert_alpha(),
-                    "potatomine":pygame.image.load("assets/potatomine_scaled.png").convert_alpha()}
-    projectile_sprite = {"pea": pygame.image.load("assets/pea.png").convert_alpha()}
+                    "potatomine":pygame.image.load("assets/potatomine_scaled.png").convert_alpha(),
+                    "chomper":pygame.image.load("assets/chomper_scaled.png").convert_alpha(),
+                    "repeater":pygame.image.load("assets/repeater_scaled.png").convert_alpha(),
+                    "jalapeno":pygame.image.load("assets/jalapeno_scaled.png").convert_alpha()}
+    projectile_sprite = {
+        "pea": pygame.image.load("assets/pea.png").convert_alpha(),
+        "mower": pygame.image.load("assets/mower_scaled.png").convert_alpha(),
+    }
     clock = pygame.time.Clock()
     cell_size = 75
     offset_border = 100
@@ -83,13 +103,20 @@ def render(render_info):
                 zombie_name = zombie_name.lower()
                 screen.blit(zombie_sprite[zombie_name], (offset_border + cell_size * (pos + offset) - zombie_sprite[zombie_name].get_width(),
                     offset_border + lane * cell_size + offset_y - zombie_sprite[zombie_name].get_height()))
+            if frame_info.get("mowers", [False] * config.N_LANES)[lane]:
+                sprite = projectile_sprite["mower"]
+                screen.blit(sprite, (offset_border - sprite.get_width(),
+                    offset_border + lane * cell_size + offset_y - sprite.get_height()))
             for plant_name, pos in frame_info["plants"][lane]:
                 plant_name = plant_name.lower()
                 screen.blit(plant_sprite[plant_name], (offset_border + cell_size * pos, 
                     offset_border + lane * cell_size + offset_y - plant_sprite[plant_name].get_height()))
             for projectile_name, pos, offset in frame_info["projectiles"][lane]:
                 projectile_name = projectile_name.lower()
-                screen.blit(projectile_sprite[projectile_name], (offset_border + cell_size * (pos+offset) - projectile_sprite[projectile_name].get_width(), 
+                sprite = projectile_sprite.get(projectile_name)
+                if sprite is None:
+                    continue
+                screen.blit(sprite, (offset_border + cell_size * (pos+offset) - sprite.get_width(), 
                     offset_border + lane * cell_size))
         
         #Text
@@ -98,10 +125,21 @@ def render(render_info):
         cumulated_score += frame_info["score"]
         score_text = myfont.render('Score: '+ str(cumulated_score), False, (0, 0, 0))
         screen.blit(score_text, (200, 600))
-        cooldowns_text = myfont.render('Cooldowns: '+ str(frame_info["cooldowns"]), False, (0, 0, 0))
-        screen.blit(cooldowns_text, (350, 600))
+        wave_text = myfont.render('Wave: '+ str(frame_info["wave"]), False, (0, 0, 0))
+        screen.blit(wave_text, (450, 600))
+        budget_text = myfont.render('Budget: '+ str(frame_info["budget"]), False, (0, 0, 0))
+        screen.blit(budget_text, (650, 600))
         time = myfont.render('Time: '+ str(frame_info["time"]), False, (0, 0, 0))
         screen.blit(time, (900, 100))
+        cooldowns = frame_info["cooldowns"]
+        cooldown_lines = ['Cooldowns:']
+        cooldown_lines.extend([
+            plant_name.replace('-', ' ').title() + ': ' + str(cooldowns.get(plant_name, 0))
+            for plant_name in PLANT_RENDER_ORDER
+        ])
+        for i, line in enumerate(cooldown_lines):
+            cooldown_text = myfont.render(line, False, (0, 0, 0))
+            screen.blit(cooldown_text, (900, 135 + i * 25))
         
         # Did the user click the window close button?
         for event in pygame.event.get():
@@ -115,6 +153,7 @@ def render(render_info):
     pygame.quit()
 
 agent_type = "DDQN" # DDQN or Reinforce or AC or Keyboard
+DDQN_RENDER_MODEL = os.environ.get("PVZ_DDQN_RENDER_MODEL", "agents/agent_zoo/ddqn_new")
 
 
 if __name__ == "__main__":
@@ -129,7 +168,7 @@ if __name__ == "__main__":
         
     if agent_type == "DDQN":
         env = PlayerQ(render=False)
-        agent = torch.load("agents/agent_zoo/dfq5_epsexp")
+        agent = torch.load(DDQN_RENDER_MODEL, weights_only=False)
         
     if agent_type == "AC":
         env = TrainerAC3(render=False, max_frames = 500*config.FPS)

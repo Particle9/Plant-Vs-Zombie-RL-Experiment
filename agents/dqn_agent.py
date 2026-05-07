@@ -150,7 +150,7 @@ class DQNAgent:
         self.s_0 = s_1.copy()
         if done:
             if mode != "explore": # We document the end of the play
-                self.training_iterations.append(min(config.MAX_FRAMES, self.env._scene._chrono))
+                self.training_iterations.append(min(config.MAX_SECONDS, self.env._scene._chrono))
             self.s_0 = self._transform_observation(self.env.reset())
         return done
     

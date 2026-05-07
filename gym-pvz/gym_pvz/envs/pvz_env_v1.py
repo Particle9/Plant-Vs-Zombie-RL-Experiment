@@ -1,6 +1,6 @@
 import gym
 from gym.spaces import MultiDiscrete, MultiBinary, Tuple, Discrete
-from pvz import Scene, BasicZombieSpawner, Move, config, Sunflower, Peashooter, Wallnut
+from pvz import Scene, BasicZombieSpawner, Move, config, Sunflower, Peashooter, Wallnut, Chomper, Repeater, Jalapeno
 import numpy as np
 
 MAX_ZOMBIE_PER_CELL = 10
@@ -10,7 +10,7 @@ class PVZEnv_V1(gym.Env):
     metadata = {'render.modes': ['human']}
 
     def __init__(self):
-        self.plant_deck = {"sunflower": Sunflower, "peashooter": Peashooter, "wall-nut": Wallnut}
+        self.plant_deck = {"sunflower": Sunflower, "peashooter": Peashooter, "wall-nut": Wallnut, "chomper": Chomper, "repeater": Repeater, "jalapeno": Jalapeno}
         
         self.action_space = Discrete(len(self.plant_deck) * config.N_LANES * config.LANE_LENGTH + 1)
         # self.action_space = MultiDiscrete([len(self.plant_deck), config.N_LANES, config.LANE_LENGTH]) # plant, lane, pos
@@ -64,7 +64,7 @@ class PVZEnv_V1(gym.Env):
             self._scene.step()
             reward += self._scene.score
         ob = self._get_obs()
-        episode_over = self._scene.lives <= 0
+        episode_over = (self._scene.lives <= 0) or (hasattr(self._scene._zombie_spawner, '_finished') and self._scene._zombie_spawner._finished and len(self._scene.zombies) == 0)
         self._reward = reward
         return ob, reward, episode_over, {}
     

@@ -1,6 +1,14 @@
-FPS = 2
+FPS = 24
 
-MAX_FRAMES=400
+SIMULATION_SPEED = 10
+SIMULATION_DT = SIMULATION_SPEED / FPS
+ 
+# Maximum number of waves to run before stopping the level
+MAX_WAVE = 100
+
+# Backwards-compatible frame/second limits (used elsewhere)
+MAX_FRAMES = 999999999
+MAX_SECONDS = MAX_FRAMES / FPS
 
 N_LANES = 5 # Height
 LANE_LENGTH = 9 # Width
@@ -12,11 +20,11 @@ NATURAL_SUN_PRODUCTION = 25
 NATURAL_SUN_PRODUCTION_COOLDOWN = 10
 
 # Mowers
-MOWERS = False
+MOWERS = True
 
 # Score values
 SURVIVAL = 0
-SURVIVAL_STEP = 20 # every 100 sec survival reward increases
+SURVIVAL_STEP = 20 # every 20 sec survival reward increases
 SCORE_ALIVE_PLANT = 0
 SCORE_ALIVE_MOWER = 0
 

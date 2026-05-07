@@ -20,7 +20,7 @@ class Potatomine(Plant):
 
     def __init__(self, lane, pos):
         super().__init__(lane, pos)
-        self.attack_cooldown = self.ATTACK_COOLDOWN * config.FPS - 1
+        self.attack_cooldown = max(0.0, self.ATTACK_COOLDOWN - config.SIMULATION_DT)
         self.used=0
 
     
@@ -36,7 +36,7 @@ class Potatomine(Plant):
             if(self.used==1):
                 self.hp=0
         else:
-            self.attack_cooldown -= 1
+                    self.attack_cooldown -= config.SIMULATION_DT
                     
            
 

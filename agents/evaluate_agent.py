@@ -29,10 +29,10 @@ def evaluate(env, agent, n_iter=1000, verbose = True):
         summary['score'] = np.sum(summary["rewards"])
 
         score_hist.append(summary['score'])
-        iter_hist.append(min(env.env._scene._chrono, config.MAX_FRAMES))
+        iter_hist.append(min(env.env._scene._chrono, config.MAX_SECONDS))
         
         sum_score += summary['score']
-        sum_iter += min(env.env._scene._chrono, config.MAX_FRAMES)
+        sum_iter += min(env.env._scene._chrono, config.MAX_SECONDS)
         
         # if env.env._scene._chrono >= 1000:
         #    render_info = env.env._scene._render_info
@@ -49,7 +49,7 @@ def evaluate(env, agent, n_iter=1000, verbose = True):
         plt.show()
         # Plot of the iterations
         plt.hist(iter_hist)
-        plt.title("Survived frames per play over {} plays".format(n_iter))
+        plt.title("Survived seconds per play over {} plays".format(n_iter))
         plt.show()
         # Plot of the action
         plt.hist(np.concatenate(actions), np.arange(0, config.N_LANES * config.LANE_LENGTH * 4 + 2) -0.5, density=True)

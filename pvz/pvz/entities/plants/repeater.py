@@ -1,0 +1,35 @@
+from .plant import Plant
+from ..projectile.pea import Pea
+from ... import config
+
+
+REPEATER_COST = 200
+REPEATER_COOLDOWN = 5
+REPEATER_MAX_HP = 300
+REPEATER_ATTACK = 20
+REPEATER_ATTACK_COOLDOWN = 1.5
+REPEATER_PROJECTILE_SPEED = 5
+
+
+class Repeater(Plant):
+
+    MAX_HP = REPEATER_MAX_HP
+    COOLDOWN = REPEATER_COOLDOWN
+    COST = REPEATER_COST
+
+    ATTACK = REPEATER_ATTACK
+    ATTACK_COOLDOWN = REPEATER_ATTACK_COOLDOWN
+    PROJECTILE_SPEED = REPEATER_PROJECTILE_SPEED
+
+    def __init__(self, lane, pos):
+        super().__init__(lane, pos)
+        self.attack_cooldown = max(0.0, self.ATTACK_COOLDOWN - config.SIMULATION_DT)
+
+    def step(self, scene):
+        if self.attack_cooldown <= 0:
+            if scene.grid.is_attacked(self.lane):
+                scene.projectiles.append(Pea(self.PROJECTILE_SPEED, self.ATTACK, self.lane, self.pos))
+                scene.projectiles.append(Pea(self.PROJECTILE_SPEED, self.ATTACK, self.lane, self.pos))
+                self.attack_cooldown = max(0.0, self.ATTACK_COOLDOWN - config.SIMULATION_DT)
+        else:
+            self.attack_cooldown -= config.SIMULATION_DT

@@ -20,11 +20,11 @@ class Projectile(Entity):
         self._render_start = True
         self._render_start_pos = pos
 
-    def _move_one_step(self): # Move the projectile right for one frame
+    def _move_one_step(self): # Move the projectile right for one simulation step
         self._previous_pos = self._pos
         self._previous_offset = self._offset
         
-        self._offset += self._speed / config.FPS
+        self._offset += self._speed * config.SIMULATION_DT
         self._pos += int(self._offset)
         self._offset -= int(self._offset)
 
@@ -37,8 +37,8 @@ class Projectile(Entity):
 
     def _hit(self, zombie): # If a zombie is on its path or not
         if zombie.lane == self.lane:
-            if  (self._previous_pos, self._previous_offset * zombie.WALKING_SPEED * config.FPS) <= (zombie.pos, zombie._offset) and \
-                (self._pos, self._offset * zombie.WALKING_SPEED * config.FPS) >= (zombie.pos, zombie._offset): # Lexicographic order
+            if  (self._previous_pos, self._previous_offset * zombie._cell_length) <= (zombie.pos, zombie._offset) and \
+                (self._pos, self._offset * zombie._cell_length) >= (zombie.pos, zombie._offset): # Lexicographic order
                 return True
         return False
     

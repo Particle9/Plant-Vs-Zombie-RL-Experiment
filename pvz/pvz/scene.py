@@ -20,7 +20,7 @@ class Scene:
         self.grid = Grid()
 
         self._zombie_spawner = zombie_spawner # Used to spawn the zombies we want for the level
-        self._timer = config.NATURAL_SUN_PRODUCTION_COOLDOWN * config.FPS - 1 # Natural production of sun
+        self._timer = max(0.0, config.NATURAL_SUN_PRODUCTION_COOLDOWN - config.SIMULATION_DT) # Natural production of sun
 
         self._chrono = 0
 
@@ -28,8 +28,9 @@ class Scene:
         self.lives = 1 # hp of the player (lives = 0: lossed battle)
 
         self._render_info = [{"zombies": [[] for _ in range(config.N_LANES)], "plants": [[] for _ in range(config.N_LANES)], 
-                            "projectiles": [[] for _ in range(config.N_LANES)], "sun": self.sun,
-                            "score": self.score, "cooldowns": {name: 0 for name in self.plant_cooldowns}, "time":0}]
+                    "projectiles": [[] for _ in range(config.N_LANES)], "mowers": [self.grid.is_mower(lane) for lane in range(config.N_LANES)], "sun": self.sun,
+                            "score": self.score, "cooldowns": {name: 0 for name in self.plant_cooldowns}, "time":0,
+                            "wave": self._zombie_spawner._wave_index, "budget": self._zombie_spawner._wave_budget}]
 
 
     def step(self):
@@ -40,14 +41,18 @@ class Scene:
         for projectile in self.projectiles:
             projectile.step(self)
         
-        self._chrono += 1
-        self.score = config.SURVIVAL * int((self._chrono + 1) % (config.FPS * config.SURVIVAL_STEP) == 0) + self.grid._mowers.sum()
+        prev_chrono = self._chrono
+        self._chrono += config.SIMULATION_DT
+        
+        survival_interval = config.SURVIVAL_STEP
+        self.score = config.SURVIVAL * int((self._chrono // survival_interval) > (prev_chrono // survival_interval)) + self.grid._mowers.sum()
 
         self._zombie_spawner.spawn(self)
         self._remove_dead_objects()
+        self._process_zombie_shedding()
         self._timed_events()
 
-        self._timer -= 1
+        self._timer -= config.SIMULATION_DT
 
         self._render_info.append(self._render_get_info())
 
@@ -60,6 +65,15 @@ class Scene:
         if self.grid.is_mower(lane):
             self.grid.remove_mower(lane)
             self.projectiles.append(Mower(lane))
+            for zombie in self.zombies:
+                if zombie.lane == lane:
+                    zombie.hp = 0
+            return
+
+        if any(projectile.__class__.__name__ == "Mower" and projectile.lane == lane for projectile in self.projectiles):
+            for zombie in self.zombies:
+                if zombie.lane == lane:
+                    zombie.hp = 0
         else:
             self.lives -= 1
 
@@ -90,17 +104,19 @@ class Scene:
 
     def _timed_events(self):
         for plant in self.plant_cooldowns:
-            self.plant_cooldowns[plant] = max(0, self.plant_cooldowns[plant] - 1)
+            self.plant_cooldowns[plant] = max(0.0, self.plant_cooldowns[plant] - config.SIMULATION_DT)
         
         if self._timer <= 0:
             self.sun += config.NATURAL_SUN_PRODUCTION
-            self._timer = config.NATURAL_SUN_PRODUCTION_COOLDOWN * config.FPS - 1
+            self._timer = max(0.0, config.NATURAL_SUN_PRODUCTION_COOLDOWN - config.SIMULATION_DT)
     
     def _render_get_info(self):
         info = {"zombies": [[] for _ in range(config.N_LANES)], "plants": [[] for _ in range(config.N_LANES)], 
-                "projectiles": [[] for _ in range(config.N_LANES)], "sun": self.sun,
-                "score": self.score, "cooldowns": {name: int(self.plant_cooldowns[name]/config.FPS)+1 for name in self.plant_cooldowns},
-                "time": int(self._chrono/config.FPS)}
+                "projectiles": [[] for _ in range(config.N_LANES)], "mowers": [self.grid.is_mower(lane) for lane in range(config.N_LANES)], "sun": self.sun,
+            "score": self.score, "cooldowns": {name: int(self.plant_cooldowns[name]) + 1 for name in self.plant_cooldowns},
+            "time": int(self._chrono),
+                "wave": self._zombie_spawner._wave_index,
+                "budget": self._zombie_spawner._wave_budget}
         for zombie in self.zombies:
             info["zombies"][zombie.lane].append((zombie.__class__.__name__, zombie.pos, zombie.get_offset()))
         for projectile in self.projectiles:
@@ -109,6 +125,13 @@ class Scene:
         for plant in self.plants:
             info["plants"][plant.lane].append((plant.__class__.__name__, plant.pos))
         return info
+
+    def _process_zombie_shedding(self):
+        """Add any shed zombies to the scene after cleanup (prevents mid-iteration modification)"""
+        for zombie in self.zombies:
+            if hasattr(zombie, '_shed_zombie') and zombie._shed_zombie is not None:
+                self.add_zombie(zombie._shed_zombie)
+                zombie._shed_zombie = None
 
     def move_available(self): # Return true if a player can make a move
         if not self.grid.is_full():
@@ -150,4 +173,4 @@ class Scene:
 
 
         return ("\nZombies" + zombies_info + "\nPlants :\n" + grid_string + "\nCooldowns:\n"
-                    + str(self.plant_cooldowns) + "\nSun\n" + str(self.sun) + "\nLives" + str(self.lives) + "\nScore" + str(self.score) + "\nChrono" + str(self._chrono))
+                    + str(self.plant_cooldowns) + "\nSun\n" + str(self.sun) + "\nLives" + str(self.lives) + "\nScore" + str(self.score) + "\nTime" + str(self._chrono))
