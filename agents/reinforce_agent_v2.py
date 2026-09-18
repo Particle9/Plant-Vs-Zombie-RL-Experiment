@@ -111,9 +111,9 @@ class ReinforceAgentV2():
 
 
 class PlayerV2():
-    def __init__(self,render=True, max_frames = 1000, n_iter = 100000):
+    def __init__(self,render=True, max_waves = 1000, n_iter = 100000):
         self.env = gym.make('gym_pvz:pvz-env-v2')
-        self.max_frames = max_frames
+        self.max_waves = max_waves
         self.render = render
         self._grid_size = config.N_LANES * config.LANE_LENGTH
 
@@ -152,7 +152,7 @@ class PlayerV2():
         
         t = 0
 
-        while(self.env._scene._chrono<self.max_frames):
+        while True:
             if(self.render):
                 self.env.render()
             if np.random.random()<epsilon:
@@ -170,6 +170,14 @@ class PlayerV2():
             if done:
                 break
 
+            # stop when reaching max waves
+            base_env = getattr(self.env, "env", self.env)
+            base_env = getattr(base_env, "unwrapped", base_env)
+            scene = getattr(base_env, "_scene", None)
+            wave = getattr(getattr(scene, "_zombie_spawner", None), "_wave_index", 0)
+            if wave >= self.max_waves:
+                break
+
         summary['observations'] = np.vstack(summary['observations'])
         summary['actions'] = np.vstack(summary['actions'])
         summary['rewards'] = np.vstack(summary['rewards'])
@@ -181,7 +189,7 @@ class PlayerV2():
 
 if __name__ == "__main__":
 
-    env = PlayerV2(render=False,max_frames = 1000)
+    env = PlayerV2(render=False,max_waves = 1000)
     agent = DiscreteAgentV2(
         input_size=env.num_observations(),
         possible_actions=env.get_actions()
@@ -215,7 +223,12 @@ if __name__ == "__main__":
         # print("n_iter {}".format(summary['rewards'].shape[0]))
 
         sum_score += summary['score']
-        sum_iter += min(env.env._scene._chrono, env.max_frames)
+        # Track waves (use scene's wave index instead of frame chrono)
+        base_env = getattr(env.env, "env", env.env)
+        base_env = getattr(base_env, "unwrapped", base_env)
+        scene = getattr(base_env, "_scene", None)
+        current_wave = getattr(getattr(scene, "_zombie_spawner", None), "_wave_index", 0)
+        sum_iter += min(current_wave, env.max_waves)
 
         # Update agent
         agent.update(summary["observations"],summary["actions"],summary["rewards"])
@@ -242,11 +255,17 @@ if __name__ == "__main__":
                     nn_name = input("Save name: ")
 
         if (episode_idx%n_evaluate == n_evaluate-1):
-            avg_score, avg_iter = evaluate(env, agent, n_iter_evaluation)
-            print("\n----------->Episode {}, mean score {}".format(episode_idx,avg_score))
-            print("----------->n_iter {}".format(avg_iter))
-            eval_score_plt.append(avg_score)
-            eval_iter_plt.append(avg_iter)
+                avg_score, avg_iter, avg_wave = evaluate(env, agent, n_iter_evaluation)
+                print("\n----------->Episode {}, mean score {}".format(episode_idx,avg_score))
+                print("----------->n_iter {}".format(avg_iter))
+                print("----------->mean wave {}".format(avg_wave))
+                eval_score_plt.append(avg_score)
+                eval_iter_plt.append(avg_iter)
+                # track waves for evaluation
+                try:
+                    eval_wave_plt.append(avg_wave)
+                except NameError:
+                    eval_wave_plt = [avg_wave]
             # input()
         
 
@@ -255,4 +274,8 @@ if __name__ == "__main__":
     plt.show()
     plt.plot(range(n_record, n_iter+1, n_record), iter_plt)
     plt.plot(range(n_evaluate, n_iter+1, n_evaluate), eval_iter_plt, color='red')
+    plt.show()
+    # plot evaluation waves if present
+    if 'eval_wave_plt' in locals():
+        plt.plot(range(n_evaluate, n_iter+1, n_evaluate), eval_wave_plt, color='green')
     plt.show()

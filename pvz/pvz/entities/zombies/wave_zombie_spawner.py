@@ -9,14 +9,6 @@ from .zombie_all_star import Zombie_all_star
 from ... import config
 import random
 
-INITIAL_OFFSET = 6
-SPAWN_INTERVAL = 8
-REST_INTERVAL = 20
-FIRST_HUGE_WAVE = 5
-HUGE_WAVE_EVERY = 5
-BASE_WAVE_BUDGET = 1
-WAVE_BUDGET_SCALING = 1
-
 ZOMBIE_CATALOG = (
     (Zombie, 1, lambda wave: 4000),
     (Zombie_cone, 2, lambda wave: min(1200 + wave * 80, 2800)),
@@ -29,7 +21,7 @@ ZOMBIE_CATALOG = (
 class WaveZombieSpawner(ZombieSpawner):
 
     def __init__(self):
-        self._spawn_timer = max(0.0, INITIAL_OFFSET - config.SIMULATION_DT)
+        self._spawn_timer = max(0.0, config.WAVE_INITIAL_OFFSET - config.SIMULATION_DT)
         self._wave_timer = 0
         self._wave_index = 1
         self._wave_budget = 0
@@ -44,22 +36,22 @@ class WaveZombieSpawner(ZombieSpawner):
         return sum(zombie.hp for zombie in scene.zombies)
 
     def _wave_budget_for(self, wave_index):
-        base_budget = BASE_WAVE_BUDGET + wave_index * WAVE_BUDGET_SCALING
+        base_budget = config.WAVE_BASE_BUDGET + wave_index * config.WAVE_BUDGET_SCALING
         if self._is_huge_wave(wave_index):
             return min(140, base_budget * 4)
         return min(90, base_budget)
 
     def _is_huge_wave(self, wave_index):
-        if wave_index < FIRST_HUGE_WAVE:
+        if wave_index < config.WAVE_FIRST_HUGE:
             return False
-        return (wave_index - FIRST_HUGE_WAVE) % HUGE_WAVE_EVERY == 0
+        return (wave_index - config.WAVE_FIRST_HUGE) % config.WAVE_HUGE_EVERY == 0
 
     def _spawn_interval_for(self, wave_index):
-        seconds = max(3, SPAWN_INTERVAL - wave_index // 6)
+        seconds = max(3, config.WAVE_SPAWN_INTERVAL - wave_index // 6)
         return seconds
 
     def _rest_duration_for(self, wave_index):
-        seconds = REST_INTERVAL + min(15, wave_index // 2)
+        seconds = config.WAVE_REST_INTERVAL + min(15, wave_index // 2)
         if self._is_huge_wave(wave_index):
             seconds += 5
         return seconds

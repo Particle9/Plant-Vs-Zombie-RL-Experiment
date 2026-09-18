@@ -7,3 +7,5 @@ from .ddqn_agent import QNetwork, DDQNAgent, PlayerQ, experienceReplayBuffer
 from .dqn_agent import QNetwork_DQN, DQNAgent, PlayerQ_DQN
 from .actor_critic_agent_v3 import PolicynetAC3, ValuenetAC3, ACAgent3, TrainerAC3
 from .keyboard_agent import KeyboardAgent
+from .dummy_agent import RandomAgent, DoNothingAgent
+from .heuristic_agent import HeuristicAgent

@@ -6,6 +6,15 @@ SIMULATION_DT = SIMULATION_SPEED / FPS
 # Maximum number of waves to run before stopping the level
 MAX_WAVE = 100
 
+# Wave/Zombie-spawn pacing and budget tuning
+WAVE_INITIAL_OFFSET = 6
+WAVE_SPAWN_INTERVAL = 8
+WAVE_REST_INTERVAL = 20
+WAVE_FIRST_HUGE = 5
+WAVE_HUGE_EVERY = 5
+WAVE_BASE_BUDGET = 1
+WAVE_BUDGET_SCALING = 1
+
 # Backwards-compatible frame/second limits (used elsewhere)
 MAX_FRAMES = 999999999
 MAX_SECONDS = MAX_FRAMES / FPS
@@ -17,16 +26,21 @@ INITIAL_SUN_AMOUNT = 50
 
 # Sun that falls from the sky
 NATURAL_SUN_PRODUCTION = 25
-NATURAL_SUN_PRODUCTION_COOLDOWN = 10
+NATURAL_SUN_PRODUCTION_COOLDOWN = 50
+
+# Sunflower tuning
+SUNFLOWER_PRODUCTION = 50
+SUNFLOWER_INITIAL_COOLDOWN = 5
+SUNFLOWER_PRODUCTION_COOLDOWN = 10
 
 # Mowers
 MOWERS = True
 
 # Score values
-SURVIVAL = 0
+SURVIVAL = 1
 SURVIVAL_STEP = 20 # every 20 sec survival reward increases
 SCORE_ALIVE_PLANT = 0
-SCORE_ALIVE_MOWER = 0
+SCORE_ALIVE_MOWER = 2
 
 # Score 10/10
 # Scorebis : 10/20

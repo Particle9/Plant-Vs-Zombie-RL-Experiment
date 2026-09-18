@@ -6,7 +6,7 @@ import numpy as np
 from .entities.projectile.mower import Mower
 
 class Scene:
-    def __init__(self, plant_deck, zombie_spawner):
+    def __init__(self, plant_deck, zombie_spawner, record_render_history=False):
         self.plants = []
         self.zombies = []
 
@@ -23,14 +23,16 @@ class Scene:
         self._timer = max(0.0, config.NATURAL_SUN_PRODUCTION_COOLDOWN - config.SIMULATION_DT) # Natural production of sun
 
         self._chrono = 0
+        self._record_render_history = record_render_history
 
         self.score = 0 # score
         self.lives = 1 # hp of the player (lives = 0: lossed battle)
 
-        self._render_info = [{"zombies": [[] for _ in range(config.N_LANES)], "plants": [[] for _ in range(config.N_LANES)], 
-                    "projectiles": [[] for _ in range(config.N_LANES)], "mowers": [self.grid.is_mower(lane) for lane in range(config.N_LANES)], "sun": self.sun,
-                            "score": self.score, "cooldowns": {name: 0 for name in self.plant_cooldowns}, "time":0,
-                            "wave": self._zombie_spawner._wave_index, "budget": self._zombie_spawner._wave_budget}]
+        initial_render_info = {"zombies": [[] for _ in range(config.N_LANES)], "plants": [[] for _ in range(config.N_LANES)], 
+                "projectiles": [[] for _ in range(config.N_LANES)], "mowers": [self.grid.is_mower(lane) for lane in range(config.N_LANES)], "sun": self.sun,
+                    "score": self.score, "cooldowns": {name: 0 for name in self.plant_cooldowns}, "time":0,
+                    "wave": self._zombie_spawner._wave_index, "budget": self._zombie_spawner._wave_budget}
+        self._render_info = [initial_render_info] if self._record_render_history else []
 
 
     def step(self):
@@ -54,7 +56,8 @@ class Scene:
 
         self._timer -= config.SIMULATION_DT
 
-        self._render_info.append(self._render_get_info())
+        if self._record_render_history:
+            self._render_info.append(self._render_get_info())
 
     def add_zombie(self, zombie):
         self.zombies.append(zombie)

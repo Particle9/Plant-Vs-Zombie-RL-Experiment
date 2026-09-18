@@ -22,7 +22,7 @@ agent_type = "DDQN" # DDQN or Reinforce or AC or Keyboard
 if __name__ == "__main__":
 
     if agent_type == "Reinforce":
-        env = PlayerV2(render=False, max_frames = 500 * config.FPS)
+        env = PlayerV2(render=False, max_waves = 500)
         agent = ReinforceAgentV2(
                 input_size=env.num_observations(),
                 possible_actions=env.get_actions()
@@ -30,7 +30,7 @@ if __name__ == "__main__":
         agent.load("agents/agent_zoo/dfp5")
          
     if agent_type == "AC":
-        env = TrainerAC3(render=False, max_frames = 500*config.FPS)
+        env = TrainerAC3(render=False, max_waves=500)
         agent = ACAgent3(
                 input_size=env.num_observations(),
                 possible_actions=env.get_actions()
@@ -46,10 +46,11 @@ if __name__ == "__main__":
         agent = torch.load("agents/agent_zoo/dfq5_dqn")
     
     if agent_type == "Keyboard":
-        env = PlayerV2(render=True, max_frames = 500*config.FPS)
+        env = PlayerV2(render=True, max_waves = 500)
         agent = KeyboardAgent()
 
         
-    avg_score, avg_iter = evaluate(env, agent)
+    avg_score, avg_iter, avg_wave = evaluate(env, agent)
     print("\nMean score {}".format(avg_score))
     print("Mean iterations {}".format(avg_iter))
+    print("Mean wave index {}".format(avg_wave))

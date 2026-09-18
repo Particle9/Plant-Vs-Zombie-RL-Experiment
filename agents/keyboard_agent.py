@@ -41,9 +41,9 @@ class KeyboardAgent():
 
 
 class PVZ():
-    def __init__(self,render=True, max_frames = 1000, n_iter = 100000):
+    def __init__(self,render=True, max_waves = 1000, n_iter = 100000):
         self.env = gym.make('gym_pvz:pvz-env-v2')
-        self.max_frames = max_frames
+        self.max_waves = max_waves
         self.render = render
         self._grid_size = config.N_LANES * config.LANE_LENGTH
 
@@ -81,7 +81,7 @@ class PVZ():
         
         t = 0
 
-        while(self.env._scene._chrono<self.max_frames):
+        while True:
             if(self.render):
                 self.env.render()
             if np.random.random()<epsilon:
@@ -98,6 +98,13 @@ class PVZ():
 
             if done:
                 break
+            # stop when reaching max waves
+            base_env = getattr(self.env, "env", self.env)
+            base_env = getattr(base_env, "unwrapped", base_env)
+            scene = getattr(base_env, "_scene", None)
+            wave = getattr(getattr(scene, "_zombie_spawner", None), "_wave_index", 0)
+            if wave >= self.max_waves:
+                break
 
         summary['observations'] = np.vstack(summary['observations'])
         summary['actions'] = np.vstack(summary['actions'])
@@ -108,7 +115,7 @@ class PVZ():
 
 if __name__ == "__main__":
 
-    env = PVZ(render=True,max_frames = 1000)
+    env = PVZ(render=True,max_waves = 1000)
     agent = KeyboardAgent()
 
     for episode_idx in range(1000):

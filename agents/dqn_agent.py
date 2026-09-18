@@ -221,9 +221,10 @@ class DQNAgent:
                             ep))
                         break
                     if (ep%evaluate_frequency) == evaluate_frequency - 1:
-                        avg_score, avg_iter = evaluate(self.player, self.network, n_iter = evaluate_n_iter, verbose=False)
+                        avg_score, avg_iter, avg_wave = evaluate(self.player, self.network, n_iter = evaluate_n_iter, verbose=False)
                         self.real_iterations.append(avg_iter)
                         self.real_rewards.append(avg_score)
+                        self.real_waves.append(avg_wave)
 
 
                     
@@ -267,7 +268,7 @@ class DQNAgent:
             self.update_loss.append(loss.detach().numpy())
 
     def _transform_observation(self, observation):
-        observation = observation.astype(np.float64)
+        observation = observation.astype(np.float32)
         observation = np.concatenate([observation[:self._grid_size],
         observation[self._grid_size:(2*self._grid_size)]/HP_NORM,
         [observation[2 * self._grid_size]/SUN_NORM], 
@@ -292,21 +293,23 @@ class DQNAgent:
         return np.sum(grid, axis=1)/HP_NORM
         
     def _save_training_data(self, nn_name):
-        np.save(nn_name+"_rewards", self.training_rewards)
-        np.save(nn_name+"_iterations", self.training_iterations)
-        np.save(nn_name+"_real_rewards", self.real_rewards)
-        np.save(nn_name+"_real_iterations", self.real_iterations)
-        torch.save(self.training_loss, nn_name+"_loss")
+        np.save(nn_name+"_rewards", np.array(list(self.training_rewards)))
+        np.save(nn_name+"_iterations", np.array(list(self.training_iterations)))
+        np.save(nn_name+"_real_rewards", np.array(list(self.real_rewards)))
+        np.save(nn_name+"_real_iterations", np.array(list(self.real_iterations)))
+        np.save(nn_name+"_real_waves", np.array(list(self.real_waves)))
+        torch.save(list(self.training_loss), nn_name+"_loss")
         
     def initialize(self):
-        self.training_rewards = []
-        self.training_loss = []
-        self.training_iterations = []
-        self.real_rewards = []
-        self.real_iterations = []
+        self.training_rewards = deque(maxlen=100000)
+        self.training_loss = deque(maxlen=100000)
+        self.training_iterations = deque(maxlen=100000)
+        self.real_rewards = deque(maxlen=10000)
+        self.real_iterations = deque(maxlen=10000)
+        self.real_waves = deque(maxlen=10000)
         self.update_loss = []
-        self.mean_training_rewards = []
-        self.mean_training_iterations = []
+        self.mean_training_rewards = deque(maxlen=100000)
+        self.mean_training_iterations = deque(maxlen=100000)
         self.sync_eps = []
         self.rewards = 0
         self.step_count = 0
@@ -356,7 +359,7 @@ class PlayerQ_DQN():
         return self.env.action_space.n
 
     def _transform_observation(self, observation):
-        observation = observation.astype(np.float64)
+        observation = observation.astype(np.float32)
         observation = np.concatenate([observation[:self._grid_size],
         observation[self._grid_size:(2*self._grid_size)]/HP_NORM,
         [observation[2 * self._grid_size]/SUN_NORM], 

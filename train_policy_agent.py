@@ -38,7 +38,12 @@ def train(env, agent, n_iter=100000, n_record=500, n_save=1000, n_evaluate=10000
         # print("n_iter {}".format(summary['rewards'].shape[0]))
 
         sum_score += summary['score']
-        sum_iter += min(env.env._scene._chrono, env.max_frames)
+        # use wave index instead of frames
+        base_env = getattr(env.env, "env", env.env)
+        base_env = getattr(base_env, "unwrapped", base_env)
+        scene = getattr(base_env, "_scene", None)
+        current_wave = getattr(getattr(scene, "_zombie_spawner", None), "_wave_index", 0)
+        sum_iter += min(current_wave, getattr(env, "max_waves", current_wave))
 
         # Update agent
         agent.update(summary["observations"],summary["actions"],summary["rewards"])
@@ -82,7 +87,7 @@ def train(env, agent, n_iter=100000, n_record=500, n_save=1000, n_evaluate=10000
 
 if __name__ == "__main__":
 
-    env = PlayerV2(render=False,max_frames = 400)
+    env = PlayerV2(render=False,max_waves = 400)
     agent = ReinforceAgentV2(
         input_size = env.num_observations(),
         possible_actions=env.get_actions()
